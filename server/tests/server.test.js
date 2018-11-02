@@ -15,8 +15,9 @@ const todos = [{
 
 beforeEach((done) => {
   Todo.remove({}).then(() => {
-      return Todo.insertMany(todos);
-  }).then(() => done());
+      Todo.insertMany(todos);
+      done();
+  }).catch((e) => done(e));
 });
 
 describe('POST /todos', () => {
@@ -82,5 +83,58 @@ describe('GET /todos/:id', () => {
                 expect(res.body.todo.text).toBe(todos[0].text);
             })
             .end(done);
+    });
+});
+
+describe('DELETE /todos/:id', () => {
+    it('should remove a todo', (done) => {
+        var hexId = todos[1]._id.toHexString();
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(200)
+            .expect((res) => {
+                expect(res.body.todo._id).toBe(hexId);
+            })
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+
+                Todo.findById(hexId).then((todo) => {
+                    expect(todo).toBeFalsy();
+                    done();
+                }).catch((e) => done(e));
+            });
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        var hexId = '6bdc4155433e5b00165647c3'
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(404)
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+
+                done();
+            })
+    });
+
+    it('should return 404 if todo not found', (done) => {
+        var hexId = 'abc'
+
+        request(app)
+            .delete(`/todos/${hexId}`)
+            .expect(400)
+            .end((err, res) => {
+                if(err){
+                    return done(err);
+                }
+
+                done();
+            })
     });
 });
