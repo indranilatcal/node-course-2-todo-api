@@ -37,6 +37,7 @@ app.post('/users', ((req, res) => {
   }).then((token) => {
     res.header('x-auth', token).send(user);
   }).catch((e) => {
+    console.log(e);
     res.status(400).send();
   });
   
