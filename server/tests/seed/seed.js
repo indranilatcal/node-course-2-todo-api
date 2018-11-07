@@ -37,7 +37,7 @@ const todos = [{
     _creator: userTwoId
 }];
 
-const populateTodos = (done) => {
+const populateTodos = done => {
     Todo.remove({}).then(() => {
         return Todo.insertMany(todos);
     }).then(() => done());

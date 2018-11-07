@@ -40,15 +40,14 @@ UserSchema.methods.toJSON = function(){
   return _.pick(userObject, ['_id', 'email']);
 };
 
-UserSchema.methods.generateAuthToken = function (){
+UserSchema.methods.generateAuthToken = async function (){
   var user = this;
   var access = 'auth';
   var token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET).toString();
 
   user.tokens = user.tokens.concat([{access, token}]);
-  return user.save().then(() => {
-    return token;
-  });
+  await user.save();
+  return token;
 };
 
 UserSchema.methods.removeToken = function(token){
@@ -78,36 +77,30 @@ UserSchema.statics.findByToken = function(token){
   })
 };
 
-UserSchema.statics.findByCredentials = function(email, password){
+UserSchema.statics.findByCredentials = async function(email, password){
   var User = this;
 
-  return User.findOne({email}).then((user) => {
-    if(!user){
-      return Promise.reject();
-    }
+  const user = await User.findOne({email});
+  if(!user){
+    throw new Error();
+  }
 
-    return becrypt.compare(password, user.password)
-      .then(res => {
-        if(!res){
-          return Promise.reject();
-        }
-        
-        return Promise.resolve(user);
-      });
-  });
+  const res = await becrypt.compare(password, user.password);
+  if(!res){
+    throw new Error();
+  }
+
+  return user;
 };
 
-UserSchema.pre('save', function(next){
+UserSchema.pre('save', async function(next){
   var user = this;
 
   if(user.isModified('password')){
-    becrypt.genSalt(10).then((salt) => {
-      becrypt.hash(user.password, salt).then((hash) => {
-        console.log(hash);
-        user.password = hash;
-        next();
-      });
-    });
+    const salt = await becrypt.genSalt(10);
+    const hash = await becrypt.hash(user.password, salt);
+    user.password = hash;
+    next();
   }
   else{
     next();
