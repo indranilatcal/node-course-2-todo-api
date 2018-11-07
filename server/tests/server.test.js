@@ -22,16 +22,19 @@ describe('POST /todos', () => {
       .expect((res) => {
         expect(res.body.text).toBe(text);
       })
-      .end((err, res) => {
+      .end(async (err, res) => {
         if (err) {
           return done(err);
         }
 
-        Todo.find({text}).then((todos) => {
-          expect(todos.length).toBe(1);
+        try {
+            const todos = await Todo.find({text});
+            expect(todos.length).toBe(1);
           expect(todos[0].text).toBe(text);
           done();
-        }).catch((e) => done(e));
+        } catch (e) {
+            done(e);
+        }
       });
   });
 
@@ -41,15 +44,18 @@ describe('POST /todos', () => {
       .set('x-auth', users[0].tokens[0].token)
       .send({})
       .expect(400)
-      .end((err, res) => {
+      .end(async (err, res) => {
         if (err) {
           return done(err);
         }
 
-        Todo.find().then((todos) => {
-          expect(todos.length).toBe(2);
+        try {
+            const todos = await Todo.find();
+            expect(todos.length).toBe(2);
           done();
-        }).catch((e) => done(e));
+        } catch (e) {
+            done(e);
+        }
       });
   });
 });
@@ -117,15 +123,18 @@ describe('DELETE /todos/:id', () => {
             .expect((res) => {
                 expect(res.body.todo._id).toBe(hexId);
             })
-            .end((err, res) => {
+            .end(async (err, res) => {
                 if(err){
                     return done(err);
                 }
 
-                Todo.findById(hexId).then((todo) => {
+                try {
+                    const todo = await Todo.findById(hexId);
                     expect(todo).toBeFalsy();
                     done();
-                }).catch((e) => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 
@@ -136,15 +145,18 @@ describe('DELETE /todos/:id', () => {
             .delete(`/todos/${hexId}`)
             .set('x-auth', users[1].tokens[0].token)
             .expect(404)
-            .end((err, res) => {
+            .end(async (err, res) => {
                 if(err){
                     return done(err);
                 }
 
-                Todo.findById(hexId).then((todo) => {
+                try {
+                    const todo = await Todo.findById(hexId);
                     expect(todo).toBeTruthy();
                     done();
-                }).catch((e) => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 
