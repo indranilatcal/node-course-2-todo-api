@@ -276,16 +276,19 @@ describe('POST /users', () => {
                 expect(res.body._id).toBeTruthy();
                 expect(res.body.email).toBe(email);
             })
-            .end((err) => {
+            .end(async (err) => {
                 if(err){
                     return done(err);
                 }
 
-                User.findOne({email}).then((user) => {
+                try {
+                    const user = await User.findOne({email});
                     expect(user).toBeTruthy();
                     expect(user.password).not.toBe(password);
                     done();
-                }).catch(e => done(e))
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 
@@ -318,18 +321,21 @@ describe('POST /users/login', () => {
             .expect(res => {
                 expect(res.header['x-auth']).toBeTruthy();
             })
-            .end((err, res) => {
+            .end(async (err, res) => {
                 if(err){
                     return done(err);
                 }
 
-                User.findById(users[1]._id).then(user => {
+                try {
+                    const user = await User.findById(users[1]._id);
                     expect(user.toObject().tokens[1]).toMatchObject({
                         access: 'auth',
                         token: res.headers['x-auth']
                     });
                     done();
-                }).catch(e => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 
@@ -344,15 +350,18 @@ describe('POST /users/login', () => {
             .expect(res => {
                 expect(res.header['x-auth']).toBeFalsy();
             })
-            .end((err, res) => {
+            .end(async (err, res) => {
                 if(err){
                     return done(err);
                 }
 
-                User.findById(users[1]._id).then(user => {
+                try {
+                    const user = await User.findById(users[1]._id);
                     expect(user.tokens.length).toBe(1);
                     done();
-                }).catch(e => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 });
@@ -363,15 +372,18 @@ describe('DELETE /users/me/token', () => {
             .delete('/users/me/token')
             .set('x-auth', users[0].tokens[0].token)
             .expect(200)
-            .end((err, res) => {
+            .end(async (err, res) => {
                 if(err){
                     return done(err);
                 }
 
-                User.findById(users[0]._id).then(user => {
+                try {
+                    const user = await User.findById(users[0]._id);
                     expect(user.tokens.length).toBe(0);
                     done();
-                }).catch(e => done(e));
+                } catch (e) {
+                    done(e);
+                }
             });
     });
 });
